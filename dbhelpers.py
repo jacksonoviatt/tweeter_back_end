@@ -1,3 +1,5 @@
+from flask.wrappers import Response
+import mariadb
 import dbconnect
 import traceback
 
@@ -34,6 +36,8 @@ def run_insert_statement(sql, params):
         cursor.execute(sql, params)
         conn.commit()
         result = cursor.lastrowid
+    except mariadb.IntegrityError:
+        result = traceback.print_exc()
     except:
         traceback.print_exc()
         print("DO BETTER ERROR CATCHING")
