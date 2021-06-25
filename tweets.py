@@ -70,3 +70,49 @@ def get_tweet():
             users_json = json.dumps(tweet_results, default=str)
             tweet_list.append(users_json)
         return Response(tweet_list, mimetype="application/json", status=201)
+
+def delete_tweet():
+    try:
+        login_token = request.json['loginToken']
+        tweet_id = request.json['tweetId']
+    except:
+        return Response("Unauthorized data", mimetype="text/plain", status=400)
+
+
+
+    rows = dbhelpers.run_delete_statement("DELETE tweets FROM tweets INNER JOIN login ON login.user_id = tweets.user_id WHERE login.token = ? AND tweets.id = ?", [login_token, tweet_id])
+
+    if(rows == 1):
+        return Response("Deleted succesfully", mimetype="text/plain", status=200)
+    elif(rows == 0):
+        return Response("Unauthorized delete", mimetype="text/plain", status=400)
+    else:
+        return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
+
+
+
+
+
+
+def patch_tweet():
+    sql = 0
+    user_id = [()]
+    token = ""
+    
+
+    try:
+        token = request.json['loginToken']
+        tweet_id = request.json['tweetId']
+        new_content = request.json['content']
+    except:
+        return Response("That is not a valid request, or something else is wrong", mimetype="text/plain", status=400)
+       
+    sql = dbhelpers.update_specific_column("tweets", "content", new_content, tweet_id, "id")
+        
+
+    if(sql == 1):
+        return Response("The patch was succesful", mimetype="text/plain", status=201)
+    elif(sql == 0):
+        return Response("Unauthorized update", mimetype="text/plain", status=400)
+    else:
+        return Response("Database error, no updates were made", mimetype="text/plain", status=500)

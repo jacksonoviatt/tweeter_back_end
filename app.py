@@ -49,7 +49,13 @@ def tweet_post():
 def get_tweets():
     return tweets.get_tweet()
 
+@app.delete("/api/tweets")
+def delete_tweets():
+    return tweets.delete_tweet()
 
+@app.patch("/api/tweets")
+def patch_tweets():
+    return tweets.patch_tweet()
 
 
 
