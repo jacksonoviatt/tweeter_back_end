@@ -36,8 +36,6 @@ def run_insert_statement(sql, params):
         cursor.execute(sql, params)
         conn.commit()
         result = cursor.lastrowid
-    except mariadb.IntegrityError:
-        result = traceback.print_exc()
     except:
         traceback.print_exc()
         print("DO BETTER ERROR CATCHING")
@@ -81,3 +79,8 @@ def run_update_statement(sql, params):
     dbconnect.close_db_cursor(cursor)
     dbconnect.close_db_connection(conn)
     return result
+
+def update_specific_column(table, column, new_data, user_id, key):
+    # this is specific to the users table,
+    sql = run_update_statement(f"UPDATE {table} SET {column}=? WHERE {key}=?", [new_data, user_id])
+    return sql    
