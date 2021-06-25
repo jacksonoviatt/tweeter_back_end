@@ -114,3 +114,80 @@ def get_users():
             users_json = json.dumps(user_results, default=str)
             users_list.append(users_json)
         return Response(users_list, mimetype="application/json", status=201)
+
+
+def patch_users():
+    sql = 0
+    user_id = [()]
+    token = ""
+    
+
+    try:
+        token = request.json['loginToken']
+        new_email = request.json.get('email')
+        new_username = request.json.get('username')
+        new_bio = request.json.get('bio')
+        new_birthdate = request.json.get('birthdate')
+        new_image = request.json.get('imageUrl')
+        new_banner = request.json.get('bannerUrl')
+    except:
+        return Response("That is not a valid request, or something else is wrong", mimetype="text/plain", status=400)
+    try:   
+        user_id = dbhelpers.run_select_statement('SELECT users.id FROM users INNER JOIN login ON login.user_id = users.id WHERE login.token = ?', [token])
+    except:
+        return Response("That is not a valid token", mimetype="text/plain", status=400)
+
+    print(user_id)
+    if(user_id == [()]):    
+        return Response("That is not a valid token", mimetype="text/plain", status=400)
+    elif(user_id[0][0] != 0):
+        if(new_email != "" and new_email != None):
+            sql = dbhelpers.update_specific_column("users", "email", new_email, user_id[0][0], "id")
+        elif(new_username != "" and new_username != None):
+            sql = dbhelpers.update_specific_column("users", "username", new_username, user_id[0][0], "id")
+        elif(new_bio != "" and new_bio != None):
+            sql = dbhelpers.update_specific_column("users", "bio", new_bio, user_id[0][0], "id")
+        elif(new_birthdate != "" and new_birthdate != None):
+            sql = dbhelpers.update_specific_column("users", "birthdate", new_birthdate, user_id[0][0], "id")
+        elif(new_image != "" and new_image != None):
+            sql = dbhelpers.update_specific_column("users", "image_url", new_image, user_id[0][0], "id")
+        elif(new_banner != "" and new_banner != None):
+            sql = dbhelpers.update_specific_column("users", "banner_url", new_banner, user_id[0][0], "id")
+
+    
+    if(sql == 1):
+        return Response("The patch was succesful", mimetype="text/plain", status=201)
+    elif(sql == 0):
+         return Response("Unauthorized update", mimetype="text/plain", status=400)
+    else:
+        return Response("Database error, no updates were made", mimetype="text/plain", status=500)
+
+
+
+def post_login():
+    try:
+        username = request.json["username"]
+        password = request.json["password"]
+    except:
+        traceback.print_exc()
+        return Response("Incorrect username or password", mimetype="text/plain", status=400)
+    
+    if(username == "" or password == ""):
+        return Response("Enter your username and password", mimetype="text/plain", status=400)
+    
+    user_results = dbhelpers.run_select_statement("SELECT id, email, username, bio, birthdate, image_url, banner_url FROM users WHERE username = ? AND password = ?", [username, password])
+    
+    token = secrets.token_urlsafe(20)
+    login_id = dbhelpers.run_insert_statement("INSERT INTO login(user_id, token) VALUES (?, ?)", [user_results[0][0], token])
+    
+    user_results = [{'userId': user_results[0][0], 'email': user_results[0][1], 'loginToken': token, 'username': user_results[0][2],'bio': user_results[0][3], 'birtdate': user_results[0][4], 'imageUrl': user_results[0][5], 'bannerUrl': user_results[0][6]}]
+    user_json = json.dumps(user_results, default=str)
+
+    if (login_id != 0 and login_id != None):
+        return Response(user_json, mimetype="json/application", status=200)
+    else:
+        return Response("failure", mimetype="text/plain", status=500)
+
+
+def delete_login():
+    return Response("hi there",  mimetype="text/plain", status=200)
