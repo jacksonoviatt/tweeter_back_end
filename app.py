@@ -8,6 +8,7 @@ import sys
 import secrets
 from email.utils import parseaddr
 import users
+import tweets
 
 app = Flask(__name__)
 
@@ -39,6 +40,14 @@ def login_post():
 def login_delete():
     return users.delete_login()
 
+@app.post("/api/tweets")
+def tweet_post():
+    return tweets.post_tweet()
+
+
+@app.get("/api/tweets")
+def get_tweets():
+    return tweets.get_tweet()
 
 
 

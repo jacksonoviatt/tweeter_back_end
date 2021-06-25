@@ -110,7 +110,7 @@ def get_users():
     else:
         for user in user_result:
         # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birtdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
-            user_results = [{'userId': user[0], 'email': user[1], 'username': user[2], 'bio': user[3], 'birtdate': user[4], 'image_url': user[5], 'bannerUrl': user[6]}]
+            user_results = [{'userId': user[0], 'email': user[1], 'username': user[2], 'bio': user[3], 'birthdate': user[4], 'image_url': user[5], 'bannerUrl': user[6]}]
             users_json = json.dumps(user_results, default=str)
             users_list.append(users_json)
         return Response(users_list, mimetype="application/json", status=201)
@@ -133,26 +133,27 @@ def patch_users():
     except:
         return Response("That is not a valid request, or something else is wrong", mimetype="text/plain", status=400)
     try:   
-        user_id = dbhelpers.run_select_statement('SELECT users.id FROM users INNER JOIN login ON login.user_id = users.id WHERE login.token = ?', [token])
+        user_info = dbhelpers.get_user_info('token', token)
+        user_id = user_info[0]
     except:
         return Response("That is not a valid token", mimetype="text/plain", status=400)
 
-    print(user_id)
+
     if(user_id == [()]):    
         return Response("That is not a valid token", mimetype="text/plain", status=400)
-    elif(user_id[0][0] != 0):
+    elif(user_id != 0 and user_id != None):
         if(new_email != "" and new_email != None):
-            sql = dbhelpers.update_specific_column("users", "email", new_email, user_id[0][0], "id")
+            sql = dbhelpers.update_specific_column("users", "email", new_email, user_id, "id")
         elif(new_username != "" and new_username != None):
-            sql = dbhelpers.update_specific_column("users", "username", new_username, user_id[0][0], "id")
+            sql = dbhelpers.update_specific_column("users", "username", new_username, user_id, "id")
         elif(new_bio != "" and new_bio != None):
-            sql = dbhelpers.update_specific_column("users", "bio", new_bio, user_id[0][0], "id")
+            sql = dbhelpers.update_specific_column("users", "bio", new_bio, user_id, "id")
         elif(new_birthdate != "" and new_birthdate != None):
-            sql = dbhelpers.update_specific_column("users", "birthdate", new_birthdate, user_id[0][0], "id")
+            sql = dbhelpers.update_specific_column("users", "birthdate", new_birthdate, user_id, "id")
         elif(new_image != "" and new_image != None):
-            sql = dbhelpers.update_specific_column("users", "image_url", new_image, user_id[0][0], "id")
+            sql = dbhelpers.update_specific_column("users", "image_url", new_image, user_id, "id")
         elif(new_banner != "" and new_banner != None):
-            sql = dbhelpers.update_specific_column("users", "banner_url", new_banner, user_id[0][0], "id")
+            sql = dbhelpers.update_specific_column("users", "banner_url", new_banner, user_id, "id")
 
     
     if(sql == 1):
@@ -190,4 +191,22 @@ def post_login():
 
 
 def delete_login():
-    return Response("hi there",  mimetype="text/plain", status=200)
+    try:
+        login_token = request.json['loginToken']
+        
+    except:
+        traceback.print_exc()
+        print("Unauthorized data")
+        return Response("Data Error", mimetype="text/plain", status=400)
+
+
+
+    rows = dbhelpers.run_delete_statement("DELETE login FROM login WHERE token = ?", [login_token])
+
+    if(rows == 1):
+        return Response("Logout succesful", mimetype="text/plain", status=200)
+    elif(rows == 0):
+        return Response("Unauthorized logout", mimetype="text/plain", status=400)
+    else:
+        return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
+
