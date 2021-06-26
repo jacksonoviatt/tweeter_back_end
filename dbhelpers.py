@@ -2,7 +2,8 @@ from flask.wrappers import Response
 import mariadb
 import dbconnect
 import traceback
-
+import string
+import random
 
 # The same comments apply to all the helper functions in here!
 def run_select_statement(sql, params):
@@ -16,9 +17,12 @@ def run_select_statement(sql, params):
         cursor.execute(sql, params)
         result = cursor.fetchall()
     # TODO Do a better job of catching more specific errors! Might need to find a way to return error-specific results
+    
+    except mariadb.OperationalError:
+        return "There is an issue with the connections"
     except:
         traceback.print_exc()
-        print("DO BETTER ERROR CATCHING")
+        return "ERROR"
 
     # Close the resources
     dbconnect.close_db_cursor(cursor)
@@ -88,3 +92,8 @@ def update_specific_column(table, column, new_data, user_id, key):
 def get_user_info(column, token):
     user_info = run_select_statement(f"SELECT u.id, u.email, u.username, u.password, u.bio, u.birthdate, u.image_url, u.banner_url FROM users AS u INNER JOIN login AS l ON l.user_id = u.id WHERE l.{column} = ?", [token, ])
     return user_info[0]
+
+def create_salt():
+    letters_and_digits = string.ascii_letters + string.digits
+    salt = ''.join(random.choice(letters_and_digits) for i in range(10))
+    return salt

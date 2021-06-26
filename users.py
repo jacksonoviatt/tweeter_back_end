@@ -7,6 +7,14 @@ import traceback
 import sys
 import secrets
 from email.utils import parseaddr
+import hashlib
+
+def get_salt_from_db(username):
+    user = dbhelpers.run_select_statement("SELECT salt FROM users WHERE username = ?", [username])
+    if(len(user) == 1):
+        return user[0][0]
+    else:
+        return "error"
 
 def post_user():
     new_user_id = None
@@ -26,6 +34,9 @@ def post_user():
             return Response("Please enter a valid email", mimetype="text/plain", status=400)
         username = request.json['username']
         password = request.json['password']
+        salt = dbhelpers.create_salt()
+        password = salt + password
+        password = hashlib.sha512(password.encode()).hexdigest()
         bio = request.json['bio']
         try:
             birthdate = request.json['birthdate']
@@ -44,21 +55,15 @@ def post_user():
         # if image_url and banner_url are empty strings, run an sql statement that inserts the other fields
 
     if(image_url == "" and banner_url == ""):
-        new_user_id = dbhelpers.run_insert_statement("INSERT INTO users(email, username, password, bio, birthdate) VALUES (?,?,?,?,?)", [email[1], username, password, bio, birthdate])
+        new_user_id = dbhelpers.run_insert_statement("INSERT INTO users(email, username, password, bio, birthdate, salt) VALUES (?,?,?,?,?,?)", [email[1], username, password, bio, birthdate, salt])
         # if just image_url is an empty string, run an sql statement that inserts the other fields
     elif(image_url != "" and banner_url == ""):
-        new_user_id = dbhelpers.run_insert_statement("INSERT INTO users(email, username, password, bio, birthdate, image_url) VALUES (?,?,?,?,?,?)", [email[1], username, password, bio, birthdate, image_url])
+        new_user_id = dbhelpers.run_insert_statement("INSERT INTO users(email, username, password, bio, birthdate, image_url, salt) VALUES (?,?,?,?,?,?,?)", [email[1], username, password, bio, birthdate, image_url, salt])
         # if just banner_url is an empty string, run an sql statement that inserts the other fields
     elif(image_url == "" and banner_url != ""):
-        new_user_id = dbhelpers.run_insert_statement("INSERT INTO users(email, username, password, bio, birthdate, banner_url) VALUES (?,?,?,?,?,?)", [email[1], username, password, bio, birthdate, banner_url])
+        new_user_id = dbhelpers.run_insert_statement("INSERT INTO users(email, username, password, bio, birthdate, banner_url, salt) VALUES (?,?,?,?,?,?,?)", [email[1], username, password, bio, birthdate, banner_url, salt])
     else:
-        new_user_id = dbhelpers.run_insert_statement("INSERT INTO users(email, username, password, bio, birthdate, image_url, banner_url) VALUES (?,?,?,?,?,?,?)", [email[1], username, password, bio, birthdate, image_url, banner_url])
-    # except mariadb.IntegrityError:
-    #     return traceback.print_exc()
-    # except mariadb.OperationalError:
-    #     result = mariadb.OperationalError
-    #     return Response(result, mimetype="text/plain", status=400)
-        
+        new_user_id = dbhelpers.run_insert_statement("INSERT INTO users(email, username, password, bio, birthdate, image_url, banner_url, salt) VALUES (?,?,?,?,?,?,?,?)", [email[1], username, password, bio, birthdate, image_url, banner_url, salt])
 
     if(new_user_id == None):
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
@@ -169,6 +174,9 @@ def post_login():
     try:
         username = request.json["username"]
         password = request.json["password"]
+        salt = get_salt_from_db(username)
+        password = salt + password
+        password = hashlib.sha512(password.encode()).hexdigest()
     except:
         traceback.print_exc()
         return Response("Incorrect username or password", mimetype="text/plain", status=400)
