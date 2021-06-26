@@ -1,6 +1,7 @@
 import mariadb
 from flask import Flask, request, Response
 from flask_cors.core import get_regexp_pattern
+from werkzeug.wrappers import response
 import dbhelpers
 import json
 import traceback
@@ -24,7 +25,7 @@ def post_like(request_code, like_table, table_id):
         return Response("Unauthorized Like", mimetype="text/plain", status=400)
 
     if(like_id != None and like_id >= 1):
-        return Response("liked successfully", mimetype="json/application", status=200)
+        return Response("Successfully posted!", mimetype="json/application", status=200)
     else:
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
 
@@ -43,7 +44,7 @@ def delete_like(request_code, like_table, table_id):
     rows = dbhelpers.run_delete_statement(f'DELETE {like_table} FROM {like_table} WHERE user_id = ? AND {table_id} = ?', [user_info[0], type_id])
 
     if(rows == 1):
-        return Response("Deleted succesfully", mimetype="text/plain", status=200)
+        return Response("Successfully deleted!", mimetype="text/plain", status=200)
     elif(rows == 0):
         return Response("Unauthorized delete", mimetype="text/plain", status=400)
     else:
@@ -55,11 +56,11 @@ def get_like(request_code, like_table, table_id):
 
     type_id = request.args.get(request_code)
     
-    print(type_id)
+
     if(type_id != None and type_id != ""):
-        likes_result = dbhelpers.run_select_statement(f"SELECT {like_table}.{table_id}, users.id, users.username FROM users INNER JOIN {like_table} ON users.id = {like_table}.user_id WHERE {like_table}.{table_id} = ?", [type_id]) 
+        likes_result = dbhelpers.run_select_statement(f"SELECT {like_table}.{table_id}, users.id, users.username, users.email, users.bio, users.birthdate, users.image_url, users.banner_url FROM users INNER JOIN {like_table} ON users.id = {like_table}.user_id WHERE {like_table}.{table_id} = ?", [type_id]) 
     else:
-        likes_result = dbhelpers.run_select_statement(f"SELECT {like_table}.{table_id}, users.id, users.username FROM users INNER JOIN {like_table} ON users.id = {like_table}.user_id", [])
+        likes_result = dbhelpers.run_select_statement(f"SELECT {like_table}.{table_id}, users.id, users.username, users.email, users.bio, users.birthdate, users.image_url, users.banner_url FROM users INNER JOIN {like_table} ON users.id = {like_table}.user_id", [])
         
 
     if(likes_result == [] or likes_result == None):
@@ -71,3 +72,33 @@ def get_like(request_code, like_table, table_id):
             users_json = json.dumps(like_results, default=str)
             likes_list.append(users_json)
         return Response(likes_list, mimetype="application/json", status=201)
+
+
+def get_follows(column, key):
+    follows_result = []
+    follows_list = []
+
+    user_id = request.args.get("userId")
+    
+
+    # if(user_id != None and user_id != ""):
+    follow_user_id = dbhelpers.run_select_statement(f"SELECT {column} FROM follows WHERE {key} = ?", [user_id]) 
+  
+    for follow_user in follow_user_id:
+        print(follow_user[0])
+        result = dbhelpers.run_select_statement(f"SELECT users.id, users.username, users.email, users.bio, users.birthdate, users.image_url, users.banner_url FROM users WHERE users.id = ?", [follow_user[0]]) 
+        follows_result.append(result)
+    # else:
+        # likes_result = dbhelpers.run_select_statement(f"SELECT  users.id, users.username, users.email, users.bio, users.birthdate, users.image_url, users.banner_url FROM users INNER JOIN {like_table} ON users.id = {like_table}.user_id", [])
+        
+
+    if(follows_result == [] or follows_result == None):
+        return Response("DB Error, Sorry", mimetype="text/plain", status=500)
+    else:
+        for follow in follows_result:
+        # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birtdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
+            follow_list = [{'userId': follow[0][0],  'email': follow[0][2], 'username': follow[0][1], 'bio': follow[0][3], 'birthdate': follow[0][4], 'image_url': follow[0][5]}]
+            users_json = json.dumps(follow_list, default=str)
+            follows_list.append(users_json)
+        return Response(follows_list, mimetype="application/json", status=201)
+

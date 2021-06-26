@@ -35,7 +35,7 @@ def post_tweet():
     else:
         new_tweet_id = dbhelpers.run_insert_statement("INSERT INTO tweets(user_id, content) VALUES (?,?)", [user_info[0], content])
 
-    created_at = dbhelpers.run_select_statement("SELECT created_at FROM tweets", [])
+    created_at = dbhelpers.run_select_statement("SELECT created_at FROM tweets WHERE id = ?", [new_tweet_id])
    
     if(new_tweet_id >= 1 and new_tweet_id != None):
 
@@ -107,12 +107,26 @@ def patch_tweet():
     except:
         return Response("That is not a valid request, or something else is wrong", mimetype="text/plain", status=400)
        
-    sql = dbhelpers.update_specific_column("tweets", "content", new_content, tweet_id, "id")
-        
+ 
+    try:   
+        user_info = dbhelpers.get_user_info('token', token)
+    except:
+        return Response("That is not a valid token", mimetype="text/plain", status=400)
+
+    try:
+        tweet_user = dbhelpers.run_select_statement("SELECT user_id FROM tweets WHERE id=?", [tweet_id])
+    except:
+        return Response("That is not a valid comment Id", mimetype="text/plain", status=400)    
+    
+    if(user_info[0] == tweet_user[0][0]):
+           sql = dbhelpers.update_specific_column("tweets", "content", new_content, tweet_id, "id")
+    else:
+         return Response("Unauthourized edit", mimetype="text/plain", status=400)    
+    
 
     if(sql == 1):
         return Response("The patch was succesful", mimetype="text/plain", status=201)
     elif(sql == 0):
-        return Response("Unauthorized update", mimetype="text/plain", status=400)
+        return Response("Unauthourized update", mimetype="text/plain", status=400)
     else:
         return Response("Database error, no updates were made", mimetype="text/plain", status=500)

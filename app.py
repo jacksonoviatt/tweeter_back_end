@@ -11,6 +11,8 @@ from email.utils import parseaddr
 import users
 import tweets
 import likes
+import comments
+
 
 app = Flask(__name__)
 
@@ -60,6 +62,7 @@ def patch_tweets():
     return tweets.patch_tweet()
 
 
+
 @app.post("/api/tweet-likes")
 def post_likes():
     return likes.post_like('tweetId', 'tweet_likes', 'tweet_id')
@@ -72,13 +75,56 @@ def delete_likes():
 
 @app.get("/api/tweet-likes")
 def get_likes():
-    return likes.get_like('tweetId', 'tweet_likes', 'tweet_id')
+    return likes.get_like('tweetId', 'tweet_likes', 'tweet_id', {'tweetId': likes[0], 'userId': likes[1], 'username': likes[2]})
 
 
 
 
+@app.post("/api/comments")
+def post_comments():
+    return comments.post_comment()
+
+@app.get("/api/comments")
+def get_comments():
+    return comments.get_comment()
+
+@app.delete("/api/comments")
+def delete_comments():
+    return comments.delete_comment()
+@app.patch("/api/comments")
+def patch_comments():
+    return comments.patch_comment()
 
 
+@app.post("/api/comment-likes")
+def post_comment_likes():
+    return likes.post_like('commentId', 'comment_likes', 'comment_id')
+
+
+@app.delete("/api/comment-likes")
+def delete_comment_likes():
+    return likes.delete_like('commentId', 'comment_likes', 'comment_id')
+
+
+@app.get("/api/comment-likes")
+def get_comment_likes():
+    return likes.get_like('commentId', 'comment_likes', 'comment_id')
+
+@app.post("/api/follows")
+def post_follows():
+    return likes.post_like("followId", "follows", "follow_user_id")
+
+@app.delete("/api/follows")
+def delete_follows():
+    return likes.delete_like("followId", "follows", "follow_user_id")
+
+@app.get("/api/follows")
+def get_follows():
+     return likes.get_follows('follow_user_id', 'user_id')
+
+@app.get("/api/followers")
+def get_followers():
+    return likes.get_follows('user_id', 'follow_user_id')
 
 if(len(sys.argv) > 1):
     mode = sys.argv[1]
