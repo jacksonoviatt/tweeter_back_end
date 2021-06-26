@@ -1,3 +1,4 @@
+from os import link
 import mariadb
 from flask import Flask, request, Response
 from flask_cors.core import get_regexp_pattern
@@ -9,6 +10,7 @@ import secrets
 from email.utils import parseaddr
 import users
 import tweets
+import likes
 
 app = Flask(__name__)
 
@@ -58,11 +60,19 @@ def patch_tweets():
     return tweets.patch_tweet()
 
 
+@app.post("/api/tweet-likes")
+def post_likes():
+    return likes.post_like('tweetId', 'tweet_likes', 'tweet_id')
 
 
+@app.delete("/api/tweet-likes")
+def delete_likes():
+    return likes.delete_like('tweetId', 'tweet_likes', 'tweet_id')
 
 
-
+@app.get("/api/tweet-likes")
+def get_likes():
+    return likes.get_like('tweetId', 'tweet_likes', 'tweet_id')
 
 
 

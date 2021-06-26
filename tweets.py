@@ -53,7 +53,7 @@ def get_tweet():
 
 
 
-    user_id = request.json.get('userId')
+    user_id = request.args.get('userId')
     
     print(user_id)
     if(user_id != None and user_id != ""):
