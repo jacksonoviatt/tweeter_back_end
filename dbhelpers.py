@@ -19,6 +19,7 @@ def run_select_statement(sql, params):
     # TODO Do a better job of catching more specific errors! Might need to find a way to return error-specific results
     
     except mariadb.OperationalError:
+        traceback.print_exc()
         return "There is an issue with the connections"
     except:
         traceback.print_exc()

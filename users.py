@@ -70,7 +70,7 @@ def post_user():
     else:
         token = secrets.token_urlsafe(20)
         dbhelpers.run_insert_statement("INSERT INTO login(token, user_id) VALUES (?,?)", [token, new_user_id])
-        new_user = [{'userId': new_user_id, 'loginToken': token, 'email': email[1], 'username': username, 'bio': bio, 'birtdate': birthdate, 'image_url': image_url, 'bannerUrl': banner_url}]
+        new_user = {'userId': new_user_id, 'loginToken': token, 'email': email[1], 'username': username, 'bio': bio, 'birtdate': birthdate, 'image_url': image_url, 'bannerUrl': banner_url}
         new_user_json = json.dumps(new_user, default=str)
         return Response(new_user_json, mimetype="application/json", status=201)
 
@@ -110,15 +110,16 @@ def get_users():
     else:
         user_result = dbhelpers.run_select_statement("SELECT id, email, username, bio, birthdate, image_url, banner_url FROM users", [])
         
-    if(user_result == [] or user_result == None):
+    if(user_result == None):
         return Response("DB Error, Sorry", mimetype="text/plain", status=500)
     else:
         for user in user_result:
         # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birtdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
-            user_results = [{'userId': user[0], 'email': user[1], 'username': user[2], 'bio': user[3], 'birthdate': user[4], 'image_url': user[5], 'bannerUrl': user[6]}]
-            users_json = json.dumps(user_results, default=str)
-            users_list.append(users_json)
-        return Response(users_list, mimetype="application/json", status=201)
+            user_results = {'userId': user[0], 'email': user[1], 'username': user[2], 'bio': user[3], 'birthdate': user[4], 'image_url': user[5], 'bannerUrl': user[6]}
+            users_list.append(user_results)
+        users_json = json.dumps(users_list, default=str)
+            
+        return Response(users_json, mimetype="application/json", status=201)
 
 
 def patch_users():
@@ -144,9 +145,8 @@ def patch_users():
         return Response("That is not a valid token", mimetype="text/plain", status=400)
 
 
-    if(user_id == [()]):    
-        return Response("That is not a valid token", mimetype="text/plain", status=400)
-    elif(user_id != 0 and user_id != None):
+    
+    if(user_id != 0 and user_id != None):
         if(new_email != "" and new_email != None):
             sql = dbhelpers.update_specific_column("users", "email", new_email, user_id, "id")
         elif(new_username != "" and new_username != None):
@@ -189,7 +189,7 @@ def post_login():
     token = secrets.token_urlsafe(20)
     login_id = dbhelpers.run_insert_statement("INSERT INTO login(user_id, token) VALUES (?, ?)", [user_results[0][0], token])
     
-    user_results = [{'userId': user_results[0][0], 'email': user_results[0][1], 'loginToken': token, 'username': user_results[0][2],'bio': user_results[0][3], 'birtdate': user_results[0][4], 'imageUrl': user_results[0][5], 'bannerUrl': user_results[0][6]}]
+    user_results = {'userId': user_results[0][0], 'email': user_results[0][1], 'loginToken': token, 'username': user_results[0][2],'bio': user_results[0][3], 'birthdate': user_results[0][4], 'imageUrl': user_results[0][5], 'bannerUrl': user_results[0][6]}
     user_json = json.dumps(user_results, default=str)
 
     if (login_id != 0 and login_id != None):

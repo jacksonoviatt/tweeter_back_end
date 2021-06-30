@@ -15,7 +15,7 @@ import comments
 
 
 app = Flask(__name__)
-
+# CORS(app)
 
 @app.post("/api/users")
 def users_post():
@@ -75,7 +75,7 @@ def delete_likes():
 
 @app.get("/api/tweet-likes")
 def get_likes():
-    return likes.get_like('tweetId', 'tweet_likes', 'tweet_id', {'tweetId': likes[0], 'userId': likes[1], 'username': likes[2]})
+    return likes.get_like('tweetId', 'tweet_likes', 'tweet_id')
 
 
 

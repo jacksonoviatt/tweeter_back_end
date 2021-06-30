@@ -61,15 +61,15 @@ def get_tweet():
     else:
         tweet_result = dbhelpers.run_select_statement("SELECT t.id, u.id, u.username, t.content, t.created_at, u.image_url, t.tweet_image FROM users AS u INNER JOIN tweets AS t ON u.id = t.user_id", [])
         
-    if(tweet_result == [] or tweet_result == None):
+    if(tweet_result == None):
         return Response("DB Error, Sorry", mimetype="text/plain", status=500)
     else:
         for tweet in tweet_result:
         # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birtdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
-            tweet_results = [{'tweetId': tweet[0], 'userId': tweet[1], 'username': tweet[2], 'content': tweet[3], 'createdAt': tweet[4], 'userImageUrl': tweet[5], 'tweetImageUrl': tweet[6]}]
-            users_json = json.dumps(tweet_results, default=str)
-            tweet_list.append(users_json)
-        return Response(tweet_list, mimetype="application/json", status=201)
+            tweet_results = {'tweetId': tweet[0], 'userId': tweet[1], 'username': tweet[2], 'content': tweet[3], 'createdAt': tweet[4], 'userImageUrl': tweet[5], 'tweetImageUrl': tweet[6]} 
+            tweet_list.append(tweet_results)
+        users_json = json.dumps(tweet_list, default=str)
+        return Response(users_json, mimetype="application/json", status=201)
 
 def delete_tweet():
     try:

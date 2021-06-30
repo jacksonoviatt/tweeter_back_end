@@ -29,7 +29,7 @@ def post_comment():
     created_at = dbhelpers.run_select_statement("SELECT created_at FROM comments WHERE id = ?", [new_comment_id])
     if(new_comment_id != None and new_comment_id >= 1):
 
-        new_comment = [{'commentId': new_comment_id, 'tweetId': tweet_id, 'userId': user_info[0], 'username': user_info[2], 'content': content, 'createdAt': created_at[0][0]}]
+        new_comment = {'commentId': new_comment_id, 'tweetId': tweet_id, 'userId': user_info[0], 'username': user_info[2], 'content': content, 'createdAt': created_at[0][0]}
         new_comment_json = json.dumps(new_comment, default=str)
         return Response(new_comment_json, mimetype="json/application", status=200)
     else:
@@ -51,15 +51,18 @@ def get_comment():
     else:
         comment_result = dbhelpers.run_select_statement("SELECT c.id, c.tweet_id, u.id, u.username, c.content, c.created_at FROM users AS u INNER JOIN comments AS c ON u.id = c.user_id", [])
         
-    if(comment_result == [] or comment_result == None):
+    if(comment_result == None):
         return Response("DB Error, Sorry", mimetype="text/plain", status=500)
     else:
         for comment in comment_result:
         # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birtdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
-            comment_results = [{'commentId': comment[0], 'tweetId': comment[1], 'userId': comment[2], 'username': comment[3], 'content': comment[4], 'createdAt': comment[5]}]
-            users_json = json.dumps(comment_results, default=str)
-            comment_list.append(users_json)
-        return Response(comment_list, mimetype="application/json", status=201)
+            comment_results = {'commentId': comment[0], 'tweetId': comment[1], 'userId': comment[2], 'username': comment[3], 'content': comment[4], 'createdAt': comment[5]}
+           
+            
+            comment_list.append(comment_results)
+        users_json = json.dumps(comment_list, default=str)
+
+        return Response(users_json, mimetype="application/json", status=201)
 
 
 def delete_comment():
