@@ -16,6 +16,13 @@ def get_salt_from_db(username):
     else:
         return "error"
 
+def get_salt_from_db_token(token):
+    user = dbhelpers.run_select_statement("SELECT salt FROM users INNER JOIN login ON users.id = login.user_id WHERE login.token = ?", [token])
+    if(len(user) == 1):
+        return user[0][0]
+    else:
+        return "error"
+
 def post_user():
     new_user_id = None
     image_url = ""
@@ -70,7 +77,7 @@ def post_user():
     else:
         token = secrets.token_urlsafe(20)
         dbhelpers.run_insert_statement("INSERT INTO login(token, user_id) VALUES (?,?)", [token, new_user_id])
-        new_user = {'userId': new_user_id, 'loginToken': token, 'email': email[1], 'username': username, 'bio': bio, 'birtdate': birthdate, 'image_url': image_url, 'bannerUrl': banner_url}
+        new_user = {'userId': new_user_id, 'loginToken': token, 'email': email[1], 'username': username, 'bio': bio, 'birthdate': birthdate, 'imageUrl': image_url, 'bannerUrl': banner_url}
         new_user_json = json.dumps(new_user, default=str)
         return Response(new_user_json, mimetype="application/json", status=201)
 
@@ -79,7 +86,10 @@ def delete_user():
     try:
         login_token = request.json['loginToken']
         password = request.json['password']
-        
+        salt = get_salt_from_db_token(login_token)
+        password = salt + password
+        password = hashlib.sha512(password.encode()).hexdigest()
+        print(password)
     except:
         traceback.print_exc()
         print("Incorrect password or token")
@@ -87,9 +97,9 @@ def delete_user():
 
 
 
-    rows = dbhelpers.run_delete_statement("DELETE login, users FROM login INNER JOIN users ON login.user_id = users.id WHERE login.token = ? AND users.password = ?", [login_token, password])
+    rows = dbhelpers.run_delete_statement("DELETE users FROM login INNER JOIN users ON login.user_id = users.id WHERE login.token = ? AND users.password = ?", [login_token, password])
 
-    if(rows == 2):
+    if(rows >= 1):
         return Response("Deleted succesfully", mimetype="text/plain", status=200)
     elif(rows == 0):
         return Response("Unauthorized delete", mimetype="text/plain", status=400)
@@ -115,7 +125,7 @@ def get_users():
     else:
         for user in user_result:
         # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birtdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
-            user_results = {'userId': user[0], 'email': user[1], 'username': user[2], 'bio': user[3], 'birthdate': user[4], 'image_url': user[5], 'bannerUrl': user[6]}
+            user_results = {'userId': user[0], 'email': user[1], 'username': user[2], 'bio': user[3], 'birthdate': user[4], 'imageUrl': user[5], 'bannerUrl': user[6]}
             users_list.append(user_results)
         users_json = json.dumps(users_list, default=str)
             
@@ -123,7 +133,6 @@ def get_users():
 
 
 def patch_users():
-    sql = 0
     user_id = [()]
     token = ""
     
@@ -132,6 +141,7 @@ def patch_users():
         token = request.json['loginToken']
         new_email = request.json.get('email')
         new_username = request.json.get('username')
+        new_password = request.json.get('password')
         new_bio = request.json.get('bio')
         new_birthdate = request.json.get('birthdate')
         new_image = request.json.get('imageUrl')
@@ -144,30 +154,45 @@ def patch_users():
     except:
         return Response("That is not a valid token", mimetype="text/plain", status=400)
 
-
     
     if(user_id != 0 and user_id != None):
         if(new_email != "" and new_email != None):
             sql = dbhelpers.update_specific_column("users", "email", new_email, user_id, "id")
+        
         elif(new_username != "" and new_username != None):
             sql = dbhelpers.update_specific_column("users", "username", new_username, user_id, "id")
+        elif(new_password != "" and new_password != None):
+            salt = dbhelpers.create_salt()
+            sql = dbhelpers.update_specific_column("users", "salt", salt, user_id, "id")
+            new_password = salt + new_password
+            new_password = hashlib.sha512(new_password.encode()).hexdigest()
+            sql = dbhelpers.update_specific_column("users", "password", new_password, user_id, "id")
         elif(new_bio != "" and new_bio != None):
             sql = dbhelpers.update_specific_column("users", "bio", new_bio, user_id, "id")
+   
         elif(new_birthdate != "" and new_birthdate != None):
             sql = dbhelpers.update_specific_column("users", "birthdate", new_birthdate, user_id, "id")
+         
         elif(new_image != "" and new_image != None):
             sql = dbhelpers.update_specific_column("users", "image_url", new_image, user_id, "id")
+            
         elif(new_banner != "" and new_banner != None):
             sql = dbhelpers.update_specific_column("users", "banner_url", new_banner, user_id, "id")
-
+        elif(new_email == "" and new_username == "" and new_bio == "" and new_birthdate == "" and new_image == "" and new_banner == ""):
+            new_user = {'userId': user_id, 'loginToken': token, 'email': user_info[1], 'username': user_info[2], 'bio': user_info[4], 'birthdate': user_info[5], 'imageUrl': user_info[6], 'bannerUrl': user_info[7]}
+            user_json = json.dumps(new_user, default=str)
+            return Response(user_json, mimetype="application/json", status=201)
     
-    if(sql == 1):
-        return Response("The patch was succesful", mimetype="text/plain", status=201)
-    elif(sql == 0):
-         return Response("Unauthorized update", mimetype="text/plain", status=400)
-    else:
-        return Response("Database error, no updates were made", mimetype="text/plain", status=500)
 
+    print(sql)
+    if(sql == None):
+        return Response("Database error, no updates were made", mimetype="text/plain", status=500)
+    else:
+        user_info = dbhelpers.get_user_info('token', token)
+        new_user = {'userId': user_id, 'loginToken': token, 'email': user_info[1], 'username': user_info[2], 'bio': user_info[4], 'birthdate': user_info[5], 'imageUrl': user_info[6], 'bannerUrl': user_info[7]}
+        new_user_json = json.dumps(new_user, default=str)
+        return Response(new_user_json, mimetype="application/json", status=201)
+    
 
 
 def post_login():

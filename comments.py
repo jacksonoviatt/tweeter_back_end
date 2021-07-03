@@ -55,7 +55,7 @@ def get_comment():
         return Response("DB Error, Sorry", mimetype="text/plain", status=500)
     else:
         for comment in comment_result:
-        # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birtdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
+        # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birthdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
             comment_results = {'commentId': comment[0], 'tweetId': comment[1], 'userId': comment[2], 'username': comment[3], 'content': comment[4], 'createdAt': comment[5]}
            
             

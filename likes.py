@@ -68,7 +68,7 @@ def get_like(request_code, like_table, table_id):
         return Response("DB Error, Sorry", mimetype="text/plain", status=500)
     else:
         for likes in likes_result:
-        # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birtdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
+        # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birthdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
             like_results = {request_code: likes[0], 'userId': likes[1], 'username': likes[2]}
             likes_list.append(like_results)
         users_json = json.dumps(likes_list, default=str)

@@ -65,7 +65,7 @@ def get_tweet():
         return Response("DB Error, Sorry", mimetype="text/plain", status=500)
     else:
         for tweet in tweet_result:
-        # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birtdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
+        # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birthdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
             tweet_results = {'tweetId': tweet[0], 'userId': tweet[1], 'username': tweet[2], 'content': tweet[3], 'createdAt': tweet[4], 'userImageUrl': tweet[5], 'tweetImageUrl': tweet[6]} 
             tweet_list.append(tweet_results)
         users_json = json.dumps(tweet_list, default=str)
