@@ -68,36 +68,36 @@ def get_like(request_code, like_table, table_id):
         return Response("DB Error, Sorry", mimetype="text/plain", status=500)
     else:
         for likes in likes_result:
-        # user_results = [{'userId': user_result[i][0], 'email': user_result[0][1], 'username': user_result[0][2], 'bio': user_result[0][3], 'birthdate': user_result[0][4], 'image_url': user_result[0][5], 'bannerUrl': user_result[0][6]}]
             like_results = {request_code: likes[0], 'userId': likes[1], 'username': likes[2]}
             likes_list.append(like_results)
         users_json = json.dumps(likes_list, default=str)
         return Response(users_json, mimetype="application/json", status=201)
 
 
+
+# get follows and get followers are the same, aside from two columns
 def get_follows(column1, column2):
     follows_list = []
     try:
+        # get the user_id of the user we are trying to 
         user_id = request.args.get("userId")
     except:
         traceback.print_exc()
         return Response("Invalid Data", mimetype="text/plain", status=400)
 
-    # if(user_id != None and user_id != ""):
-
-    follow_user_info = dbhelpers.run_select_statement(f"SELECT users.id, users.email, users.username, users.bio, users.birthdate, users.image_url, users.banner_url FROM users INNER JOIN follows ON follows.{column1} = users.id WHERE follows.{column2} = ?", [user_id])
-
-    # else:
-        # likes_result = dbhelpers.run_select_statement(f"SELECT  users.id, users.username, users.email, users.bio, users.birthdate, users.image_url, users.banner_url FROM users INNER JOIN {like_table} ON users.id = {like_table}.user_id", [])
-        
+    # this is an inner join of the users table and the follows table
+    # dependent on the funstion args, it will either get the users who's userId line up with the follows or the followers of the userID provided
+    follow_user_info = dbhelpers.run_select_statement(
+        f"SELECT users.id, users.email, users.username, users.bio, users.birthdate, users.image_url, users.banner_url FROM users INNER JOIN follows ON follows.{column1} = users.id WHERE follows.{column2} = ?",
+        [user_id])
 
     if(follow_user_info == None):
         return Response("DB Error, Sorry", mimetype="text/plain", status=500)
     else:
+        # send back the json follows info
         for follow in follow_user_info:
             follow_results = {'userId': follow[0], 'email': follow[1], 'username': follow[2], 'bio': follow[3], 'birthdate': follow[4], 'imageUrl': follow[5], 'bannerUrl': follow[6]}
             follows_list.append(follow_results)
-        print(follows_list)
         users_json = json.dumps(follows_list, default=str)
         return Response(users_json, mimetype="application/json", status=201)
 

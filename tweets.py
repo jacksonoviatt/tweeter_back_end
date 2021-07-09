@@ -12,10 +12,7 @@ import secrets
 
 
 def post_tweet():
-    image_url = ""
-    # tweet_list = []
-
-  
+    #  content and token are required, image url is optional
     try:
         image_url = request.json.get('imageUrl')
         content = request.json['content']
@@ -24,22 +21,25 @@ def post_tweet():
         return Response("There was an issue with the data received.", mimetype="text/plain", status=400)
      
     try:   
+        # use the get_user_info function to get the users info to include in the new tweet we return to the user
         user_info = dbhelpers.get_user_info('token', token)
     except:
         return Response("That is not a valid token", mimetype="text/plain", status=400)
 
-
+# if there is no image url provided, insert the 
     if(image_url != "" and image_url != None):
         new_tweet_id = dbhelpers.run_insert_statement("INSERT INTO tweets(user_id, content, tweet_image) VALUES (?,?,?)", [user_info[0], content, image_url])
-        # if just image_url is an empty string, run an sql statement that inserts the other fields
+        # if image_url is an empty string, run an sql statement that inserts the other fields into tweets table
     else:
         new_tweet_id = dbhelpers.run_insert_statement("INSERT INTO tweets(user_id, content) VALUES (?,?)", [user_info[0], content])
 
+    # select created at from the new tweet
     created_at = dbhelpers.run_select_statement("SELECT created_at FROM tweets WHERE id = ?", [new_tweet_id])
    
+# if the new tweets id is greater than or equal to one and is not None send the new tweets information to the client
     if(new_tweet_id >= 1 and new_tweet_id != None):
-
-        new_tweet = [{'tweetId': new_tweet_id, 'userId': user_info[0], 'username': user_info[2], 'userImageUrl': user_info[6], 'content': content, 'createdAt': created_at[0][0], 'imageUrl': image_url}]
+        
+        new_tweet = {'tweetId': new_tweet_id, 'userId': user_info[0], 'username': user_info[2], 'userImageUrl': user_info[6], 'content': content, 'createdAt': created_at[0][0], 'imageUrl': image_url}
         new_tweet_json = json.dumps(new_tweet, default=str)
         return Response(new_tweet_json, mimetype="json/application", status=200)
     else:
@@ -50,9 +50,7 @@ def post_tweet():
 def get_tweet():
     tweet_result = []
     tweet_list = []
-
-
-
+    
     user_id = request.args.get('userId')
     
     print(user_id)

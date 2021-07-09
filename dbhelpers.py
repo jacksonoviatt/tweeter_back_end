@@ -86,9 +86,11 @@ def run_update_statement(sql, params):
     return result
 
 def update_specific_column(table, column, new_data, user_id, key):
-    # this is specific to the users table,
-    sql = run_update_statement(f"UPDATE {table} SET {column}=? WHERE {key}=?", [new_data, user_id])
-    return sql    
+    try:
+        sql = run_update_statement(f"UPDATE {table} SET {column}=? WHERE {key}=?", [new_data, user_id])
+        return sql
+    except:
+        return None    
 
 def get_user_info(column, token):
     user_info = run_select_statement(f"SELECT u.id, u.email, u.username, u.password, u.bio, u.birthdate, u.image_url, u.banner_url FROM users AS u INNER JOIN login AS l ON l.user_id = u.id WHERE l.{column} = ?", [token, ])

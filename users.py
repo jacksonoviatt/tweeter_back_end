@@ -132,13 +132,20 @@ def get_users():
         return Response(users_json, mimetype="application/json", status=201)
 
 
+# My patch users is slightly different than the original tweeter docs. 
+# I included the login token in the json response so that the front-end 
+# can easily replace the entire user_info cookie 
+
+
 def patch_users():
     user_id = [()]
     token = ""
     
-
+# The user will provide me with the data they want to update
     try:
+        # the login token is not optional
         token = request.json['loginToken']
+        # These are all optional
         new_email = request.json.get('email')
         new_username = request.json.get('username')
         new_password = request.json.get('password')
@@ -148,28 +155,47 @@ def patch_users():
         new_banner = request.json.get('bannerUrl')
     except:
         return Response("That is not a valid request, or something else is wrong", mimetype="text/plain", status=400)
+    
+    # Get the users information using my helper function
+
+    # def get_user_info(column, token):
+    # user_info = run_select_statement(f"SELECT u.id, u.email, u.username, u.password, u.bio, u.birthdate, u.image_url, u.banner_url FROM users AS u INNER JOIN login AS l ON l.user_id = u.id WHERE l.{column} = ?", [token, ])
+    # return user_info[0]
+
     try:   
         user_info = dbhelpers.get_user_info('token', token)
         user_id = user_info[0]
     except:
         return Response("That is not a valid token", mimetype="text/plain", status=400)
 
-    
+    # if the user_id is valid, move on to the next condtional statements
     if(user_id != 0 and user_id != None):
+        
+        # If the user sends back an empty string or something goes wrong we don't want to update the database
+        
         if(new_email != "" and new_email != None):
+            
+            #  def update_specific_column(table, column, new_data, user_id, key):
+                # this is specific to the users table,
+                # sql = run_update_statement(f"UPDATE {table} SET {column}=? WHERE {key}=?", [new_data, user_id])
+                # return sql  
             sql = dbhelpers.update_specific_column("users", "email", new_email, user_id, "id")
         
         elif(new_username != "" and new_username != None):
             sql = dbhelpers.update_specific_column("users", "username", new_username, user_id, "id")
+
+    # This one is a bit different because you have to add salt to the password
+    # and store it securely
         elif(new_password != "" and new_password != None):
             salt = dbhelpers.create_salt()
             sql = dbhelpers.update_specific_column("users", "salt", salt, user_id, "id")
             new_password = salt + new_password
             new_password = hashlib.sha512(new_password.encode()).hexdigest()
             sql = dbhelpers.update_specific_column("users", "password", new_password, user_id, "id")
+       
         elif(new_bio != "" and new_bio != None):
             sql = dbhelpers.update_specific_column("users", "bio", new_bio, user_id, "id")
-   
+            
         elif(new_birthdate != "" and new_birthdate != None):
             sql = dbhelpers.update_specific_column("users", "birthdate", new_birthdate, user_id, "id")
          
@@ -178,16 +204,18 @@ def patch_users():
             
         elif(new_banner != "" and new_banner != None):
             sql = dbhelpers.update_specific_column("users", "banner_url", new_banner, user_id, "id")
+        
+        # If the user sends back all empty strings the endpoint will respond with the original information
         elif(new_email == "" and new_username == "" and new_bio == "" and new_birthdate == "" and new_image == "" and new_banner == ""):
             new_user = {'userId': user_id, 'loginToken': token, 'email': user_info[1], 'username': user_info[2], 'bio': user_info[4], 'birthdate': user_info[5], 'imageUrl': user_info[6], 'bannerUrl': user_info[7]}
             user_json = json.dumps(new_user, default=str)
             return Response(user_json, mimetype="application/json", status=201)
-    
 
-    print(sql)
+# If sql == None then the it failed
     if(sql == None):
         return Response("Database error, no updates were made", mimetype="text/plain", status=500)
     else:
+        # get the users update information from the database and send this back to the user
         user_info = dbhelpers.get_user_info('token', token)
         new_user = {'userId': user_id, 'loginToken': token, 'email': user_info[1], 'username': user_info[2], 'bio': user_info[4], 'birthdate': user_info[5], 'imageUrl': user_info[6], 'bannerUrl': user_info[7]}
         new_user_json = json.dumps(new_user, default=str)
@@ -224,6 +252,7 @@ def post_login():
 
 
 def delete_login():
+    # request the login token
     try:
         login_token = request.json['loginToken']
         
@@ -233,9 +262,10 @@ def delete_login():
         return Response("Data Error", mimetype="text/plain", status=400)
 
 
-
+    # Delete the login row that corresponds with the provided token, this verifys the log out
     rows = dbhelpers.run_delete_statement("DELETE login FROM login WHERE token = ?", [login_token])
 
+# if successful, tell the user it was succesful
     if(rows == 1):
         return Response("Logout succesful", mimetype="text/plain", status=200)
     elif(rows == 0):
