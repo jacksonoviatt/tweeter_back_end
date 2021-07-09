@@ -34,11 +34,12 @@ def post_tweet():
         new_tweet_id = dbhelpers.run_insert_statement("INSERT INTO tweets(user_id, content) VALUES (?,?)", [user_info[0], content])
 
     # select created at from the new tweet
+    # pythons internal clock TODO
     created_at = dbhelpers.run_select_statement("SELECT created_at FROM tweets WHERE id = ?", [new_tweet_id])
    
 # if the new tweets id is greater than or equal to one and is not None send the new tweets information to the client
     if(new_tweet_id >= 1 and new_tweet_id != None):
-        
+
         new_tweet = {'tweetId': new_tweet_id, 'userId': user_info[0], 'username': user_info[2], 'userImageUrl': user_info[6], 'content': content, 'createdAt': created_at[0][0], 'imageUrl': image_url}
         new_tweet_json = json.dumps(new_tweet, default=str)
         return Response(new_tweet_json, mimetype="json/application", status=200)

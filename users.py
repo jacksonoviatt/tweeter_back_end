@@ -179,34 +179,48 @@ def patch_users():
                 # this is specific to the users table,
                 # sql = run_update_statement(f"UPDATE {table} SET {column}=? WHERE {key}=?", [new_data, user_id])
                 # return sql  
-            sql = dbhelpers.update_specific_column("users", "email", new_email, user_id, "id")
-        
-        elif(new_username != "" and new_username != None):
-            sql = dbhelpers.update_specific_column("users", "username", new_username, user_id, "id")
-
+            try:
+                sql = dbhelpers.update_specific_column("users", "email", new_email, user_id, "id")
+            except:
+                return Response("The email update failed", mimetype="text/plain", status=500)
+        if(new_username != "" and new_username != None):
+            try:
+                sql = dbhelpers.update_specific_column("users", "username", new_username, user_id, "id")
+            except:
+                return Response("The username update failed", mimetype="text/plain", status=500)
     # This one is a bit different because you have to add salt to the password
     # and store it securely
-        elif(new_password != "" and new_password != None):
-            salt = dbhelpers.create_salt()
-            sql = dbhelpers.update_specific_column("users", "salt", salt, user_id, "id")
-            new_password = salt + new_password
-            new_password = hashlib.sha512(new_password.encode()).hexdigest()
-            sql = dbhelpers.update_specific_column("users", "password", new_password, user_id, "id")
-       
-        elif(new_bio != "" and new_bio != None):
-            sql = dbhelpers.update_specific_column("users", "bio", new_bio, user_id, "id")
-            
-        elif(new_birthdate != "" and new_birthdate != None):
-            sql = dbhelpers.update_specific_column("users", "birthdate", new_birthdate, user_id, "id")
-         
-        elif(new_image != "" and new_image != None):
-            sql = dbhelpers.update_specific_column("users", "image_url", new_image, user_id, "id")
-            
-        elif(new_banner != "" and new_banner != None):
-            sql = dbhelpers.update_specific_column("users", "banner_url", new_banner, user_id, "id")
-        
+        if(new_password != "" and new_password != None):
+            try:
+                salt = dbhelpers.create_salt()
+                sql = dbhelpers.update_specific_column("users", "salt", salt, user_id, "id")
+                new_password = salt + new_password
+                new_password = hashlib.sha512(new_password.encode()).hexdigest()
+                sql = dbhelpers.update_specific_column("users", "password", new_password, user_id, "id")
+            except:
+                return Response("The password update failed", mimetype="text/plain", status=500)
+        if(new_bio != "" and new_bio != None):
+            try:
+                sql = dbhelpers.update_specific_column("users", "bio", new_bio, user_id, "id")
+            except:
+                return Response("The password update failed", mimetype="text/plain", status=500)
+        if(new_birthdate != "" and new_birthdate != None):
+            try:
+                sql = dbhelpers.update_specific_column("users", "birthdate", new_birthdate, user_id, "id")
+            except:
+                return Response("The birthdate update failed", mimetype="text/plain", status=500)
+        if(new_image != "" and new_image != None):
+            try:
+                sql = dbhelpers.update_specific_column("users", "image_url", new_image, user_id, "id")
+            except:
+                return Response("The imageUrl update failed", mimetype="text/plain", status=500)
+        if(new_banner != "" and new_banner != None):
+            try:
+                sql = dbhelpers.update_specific_column("users", "banner_url", new_banner, user_id, "id")
+            except:
+                return Response("The banner update failed", mimetype="text/plain", status=500)
         # If the user sends back all empty strings the endpoint will respond with the original information
-        elif(new_email == "" and new_username == "" and new_bio == "" and new_birthdate == "" and new_image == "" and new_banner == ""):
+        if(new_email == "" and new_username == "" and new_bio == "" and new_password == "" and new_birthdate == "" and new_image == "" and new_banner == ""):
             new_user = {'userId': user_id, 'loginToken': token, 'email': user_info[1], 'username': user_info[2], 'bio': user_info[4], 'birthdate': user_info[5], 'imageUrl': user_info[6], 'bannerUrl': user_info[7]}
             user_json = json.dumps(new_user, default=str)
             return Response(user_json, mimetype="application/json", status=201)
@@ -267,7 +281,8 @@ def delete_login():
 
 # if successful, tell the user it was succesful
     if(rows == 1):
-        return Response("Logout succesful", mimetype="text/plain", status=200)
+        return Response(status=204)
+        # thanks Ramy
     elif(rows == 0):
         return Response("Unauthorized logout", mimetype="text/plain", status=400)
     else:

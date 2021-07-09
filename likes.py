@@ -80,7 +80,7 @@ def get_follows(column1, column2):
     follows_list = []
     try:
         # get the user_id of the user we are trying to 
-        user_id = request.args.get("userId")
+        user_id = request.args["userId"]
     except:
         traceback.print_exc()
         return Response("Invalid Data", mimetype="text/plain", status=400)
